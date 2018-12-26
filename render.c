@@ -64,7 +64,9 @@ void render_level(){
 	unsigned char *LCD_POINTER_LIGHT;
 	unsigned char *LCD_POINTER_DARK;
 	unsigned char mask;
+	unsigned char walls[40];
 
+	memset(walls, 0, sizeof(unsigned char)*sizeof(walls));
 	//Based on the dimensions of the lcd memory
 	LCD_POINTER_LIGHT = GrayGetPlane(LIGHT_PLANE) + 99*30 + 20;
 	LCD_POINTER_DARK = GrayGetPlane(DARK_PLANE) + 99*30 + 20;
@@ -78,15 +80,20 @@ void render_level(){
 			}
 			levelx = floor_posx[px>>2][(py>>2) - 10][current_angle] + (current_posx>>8);
 			levely = floor_posy[px>>2][(py>>2) - 10][current_angle] + (current_posy>>8);
-			if(levelx < 160 && levely < 100 && EXT_GETPIX(LEVEL_LIGHT, levelx, levely)){
-				for(i = 0; i < 4; i++){
-					for(j = 0; j < 4; j++){
-						//EXT_SETPIX(LCD_MEM, px + i, py + j);
-					}
+			if(levelx < 160 && levely < 100 && !walls[px>>2] && EXT_GETPIX(LEVEL_LIGHT, levelx, levely)){
+				if(EXT_GETPIX(LEVEL_DARK, levelx, levely)){
+					walls[px>>2] = 1;
+				} else {
+					*LCD_POINTER_LIGHT |= mask;
 				}
-				*LCD_POINTER_LIGHT |= mask;
+			} else if(levelx < 160 && levely < 100 && !walls[px>>2] && EXT_GETPIX(LEVEL_DARK, levelx, levely)){
+				*LCD_POINTER_DARK |= mask;
 			}
-			if(levelx < 160 && levely < 100 && EXT_GETPIX(LEVEL_DARK, levelx, levely)){
+			if(!walls[px>>2] && (levelx > 160 || levely > 100)){
+				walls[px>>2] = 1;
+			}
+			if(walls[px>>2]){
+				*LCD_POINTER_LIGHT |= mask;
 				*LCD_POINTER_DARK |= mask;
 			}
 		}
